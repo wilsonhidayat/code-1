@@ -28,6 +28,8 @@ stair-streak-app/
 │   ├── netlify.toml            # Netlify configuration
 │   └── _redirects              # URL redirects
 ├── docs/                        # Documentation
+│   ├── TECHNICAL_DOCUMENTATION.md  # Complete technical guide
+│   ├── API_REFERENCE.md            # API documentation
 │   ├── DEPLOYMENT_READY.md
 │   ├── FIREBASE_SETUP.md
 │   └── NETLIFY_DEPLOYMENT_GUIDE.md
@@ -116,12 +118,36 @@ The project is optimized for Netlify deployment:
 3. Configure custom domain (optional)
 4. Set up Firebase (see docs/)
 
+## 📚 Documentation
+
+- **[Technical Documentation](docs/TECHNICAL_DOCUMENTATION.md)** - Complete technical guide covering architecture, system design, security, and more
+- **[API Reference](docs/API_REFERENCE.md)** - Detailed API documentation for all classes and methods
+- **[Firebase Setup](docs/FIREBASE_SETUP.md)** - Firebase configuration guide
+- **[Deployment Guide](docs/NETLIFY_DEPLOYMENT_GUIDE.md)** - Step-by-step deployment instructions
+- **[User Registration Guide](USER_REGISTRATION_GUIDE.md)** - User-facing registration documentation
+- **[Multi-Device Access Guide](MULTI_DEVICE_ACCESS_GUIDE.md)** - Guide for multi-device authentication
+
 ## 🔍 Troubleshooting
 
 - **Touch ID not working**: Ensure HTTPS connection
 - **Firebase errors**: Check configuration and security rules
 - **Build issues**: Run `npm run clean && npm run build`
+- **Authentication issues**: See [API Reference](docs/API_REFERENCE.md) for error handling
+
+## 🔐 Security
+
+This application uses:
+- **Hybrid Authentication**: Fingerprint + PIN backup
+- **Firebase-only Storage**: No passkeys in password managers
+- **SHA-256 Hashing**: All PINs are hashed before storage
+- **Multi-Device Support**: Access your account from any device
+
+For detailed security information, see [Technical Documentation - Security](docs/TECHNICAL_DOCUMENTATION.md#security-considerations).
 
 ## 📄 License
 
 MIT License - see LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read the technical documentation before submitting PRs.
