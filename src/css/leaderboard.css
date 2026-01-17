@@ -1,0 +1,278 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+* { 
+  box-sizing: border-box; 
+}
+
+body { 
+  font-family: 'IBM Plex Mono', monospace; 
+  margin: 0; 
+  padding: 0;
+  min-height: 100vh; 
+  background: #fff; 
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 { 
+  font-size: clamp(32px, 8vw, 48px); 
+  text-align: center;
+  margin: 0 0 30px 0;
+  font-weight: 600;
+}
+
+.podium { 
+  display: flex; 
+  justify-content: center; 
+  margin: 40px 0; 
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.podium-item { 
+  margin: 0 10px; 
+  text-align: center; 
+  min-width: 120px;
+}
+
+.podium-circle { 
+  width: clamp(60px, 15vw, 80px); 
+  height: clamp(60px, 15vw, 80px); 
+  border-radius: 50%; 
+  background: #f0f0f0; 
+  border: 2px solid #000; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: clamp(24px, 6vw, 32px); 
+  font-weight: bold; 
+  margin: 0 auto 10px; 
+}
+
+.podium-1 { 
+  background: #ffd700; 
+}
+
+.podium-2 { 
+  background: #c0c0c0; 
+}
+
+.podium-3 { 
+  background: #cd7f32; 
+}
+
+.podium-item h3 {
+  margin: 10px 0 5px 0;
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 600;
+}
+
+.podium-item p {
+  margin: 0;
+  font-size: clamp(12px, 3vw, 14px);
+  color: #666;
+}
+
+table { 
+  border-collapse: collapse; 
+  width: 100%; 
+  font-size: clamp(16px, 4vw, 24px); 
+  margin: 20px 0;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+td, th { 
+  padding: clamp(8px, 2vw, 12px) clamp(6px, 1.5vw, 8px); 
+  border-bottom: 1px solid #eee; 
+  text-align: left;
+}
+
+th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.rank { 
+  width: 60px; 
+  text-align: center; 
+  font-weight: bold;
+}
+
+
+.nav-links {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.nav-links a {
+  color: #007bff;
+  text-decoration: none;
+  margin: 0 10px;
+  font-size: clamp(14px, 3.5vw, 16px);
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  background: #f0f8ff;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .podium {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .podium-item {
+    margin: 0;
+  }
+  
+  table {
+    font-size: 14px;
+  }
+  
+  td, th {
+    padding: 8px 4px;
+  }
+  
+  .rank {
+    width: 40px;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding: 30px;
+  }
+  
+  .podium {
+    gap: 30px;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1025px) {
+  .container {
+    padding: 40px;
+  }
+  
+  .podium {
+    gap: 40px;
+  }
+}
+
+/* Face image styles */
+.podium-face, .table-face {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e7ff00;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.table-face {
+  width: 60px;
+  height: 60px;
+  border: 3px solid #e7ff00;
+}
+
+.podium-face {
+  width: 80px;
+  height: 80px;
+  margin: 10px 0;
+}
+
+/* Time display styles */
+.podium-time, .time-cell {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 5px 0;
+}
+
+.time-cell {
+  font-size: 1em;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+
+.time-cell.in-progress {
+  color: #f39c12;
+  font-style: italic;
+  font-weight: normal;
+}
+
+/* Personal best time styling */
+.podium-time {
+  font-size: 1.1em;
+  color: #27ae60;
+  font-weight: 700;
+  margin: 8px 0;
+}
+
+/* Face cell styles */
+.face-cell {
+  text-align: center;
+  padding: 15px;
+  width: 100px;
+}
+
+.sessions-cell {
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Hidden admin section */
+.admin-section {
+  margin: 20px 0;
+  text-align: center;
+  opacity: 0.1;
+  transition: opacity 0.3s ease;
+}
+
+.admin-section:hover {
+  opacity: 0.8;
+}
+
+.clear-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  transition: all 0.3s ease;
+  opacity: 0.5;
+}
+
+.clear-btn:hover {
+  background: #c82333;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.clear-btn:active {
+  transform: scale(0.95);
+}

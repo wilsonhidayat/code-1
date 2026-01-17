@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Debug Stop Station</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Stop Station</h1>
+    
+    <div class="debug-section">
+        <h3>1. System Check</h3>
+        <div id="systemResult" class="status">Testing...</div>
+        <button onclick="checkSystem()">Check System</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3>2. Check Active Sessions</h3>
+        <div id="sessionsResult" class="status">Testing...</div>
+        <button onclick="checkActiveSessions()">Check Active Sessions</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3>3. Test Authentication</h3>
+        <div id="authResult" class="status">Testing...</div>
+        <button onclick="testAuth()">Test Auth</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3>4. Test Stop Session</h3>
+        <div id="stopResult" class="status">Testing...</div>
+        <button onclick="testStopSession()">Test Stop Session</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3>5. Create Test Session</h3>
+        <div id="createResult" class="status">Testing...</div>
+        <button onclick="createTestSession()">Create Test Session</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>6. Console Logs</h3>
+        <div id="consoleLogs" class="status">
+            <pre id="logOutput">Console logs will appear here...</pre>
+        </div>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <script type="module">
+        import { FingerprintAuth } from './js/modules/fingerprint-auth.js';
+        
+        let fingerprintAuth;
+        let testUser = null;
+        
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logOutput = document.getElementById('logOutput');
+        
+        function addLog(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logOutput.textContent += logEntry;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog(args.join(' '), 'error');
+        };
+        
+        function clearLogs() {
+            logOutput.textContent = 'Console logs cleared...\n';
+        }
+        
+        async function checkSystem() {
+            const result = document.getElementById('systemResult');
+            try {
+                fingerprintAuth = new FingerprintAuth();
+                
+                if (!fingerprintAuth.isSupported) {
+                    result.innerHTML = '<span class="error">❌ Touch ID not supported</span>';
+                    return;
+                }
+                
+                await fingerprintAuth.initialize();
+                result.innerHTML = '<span class="success">✅ System ready</span>';
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function checkActiveSessions() {
+            const result = document.getElementById('sessionsResult');
+            try {
+                if (!fingerprintAuth) {
+                    await checkSystem();
+                }
+                
+                const { db, collection, getDocs } = await import('./js/config/firebase.js');
+                const activeSessionsSnapshot = await getDocs(collection(db, 'activeSessions'));
+                
+                const sessions = activeSessionsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                if (sessions.length === 0) {
+                    result.innerHTML = '<span class="info">ℹ️ No active sessions found</span>';
+                } else {
+                    result.innerHTML = `<span class="success">✅ Found ${sessions.length} active sessions</span><br><pre>${JSON.stringify(sessions, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testAuth() {
+            const result = document.getElementById('authResult');
+            try {
+                if (!fingerprintAuth) {
+                    await checkSystem();
+                }
+                
+                const user = await fingerprintAuth.authenticateUser();
+                if (user) {
+                    testUser = user;
+                    result.innerHTML = `<span class="success">✅ Authenticated: ${user.name} (ID: ${user.id})</span>`;
+                } else {
+                    result.innerHTML = '<span class="error">❌ Authentication failed</span>';
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Auth error: ${error.message}</span>`;
+            }
+        }
+        
+        async function createTestSession() {
+            const result = document.getElementById('createResult');
+            try {
+                if (!testUser) {
+                    await testAuth();
+                }
+                
+                if (!testUser) {
+                    result.innerHTML = '<span class="error">❌ Need to authenticate first</span>';
+                    return;
+                }
+                
+                await fingerprintAuth.startActiveSession(testUser.id, 'test');
+                result.innerHTML = `<span class="success">✅ Test session created for ${testUser.name}</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testStopSession() {
+            const result = document.getElementById('stopResult');
+            try {
+                if (!testUser) {
+                    await testAuth();
+                }
+                
+                if (!testUser) {
+                    result.innerHTML = '<span class="error">❌ Need to authenticate first</span>';
+                    return;
+                }
+                
+                const activeSession = await fingerprintAuth.getActiveSession(testUser.id);
+                if (!activeSession) {
+                    result.innerHTML = '<span class="error">❌ No active session found for this user</span>';
+                    return;
+                }
+                
+                await fingerprintAuth.stopActiveSession(testUser.id);
+                result.innerHTML = '<span class="success">✅ Session stopped successfully</span>';
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Auto-run system check
+        checkSystem();
+    </script>
+</body>
+</html>

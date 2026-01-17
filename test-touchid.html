@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Touch ID Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Touch ID System Test</h1>
+    
+    <div class="test-section">
+        <h3>1. System Support Check</h3>
+        <div id="supportResult" class="status">Testing...</div>
+        <button onclick="checkSupport()">Check Support</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Firebase Connection</h3>
+        <div id="firebaseResult" class="status">Testing...</div>
+        <button onclick="testFirebase()">Test Firebase</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. User Registration</h3>
+        <div id="registerResult" class="status">Testing...</div>
+        <button onclick="testRegister()">Test Register</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. User Authentication</h3>
+        <div id="authResult" class="status">Testing...</div>
+        <button onclick="testAuth()">Test Auth</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>5. Session Management</h3>
+        <div id="sessionResult" class="status">Testing...</div>
+        <button onclick="testSessions()">Test Sessions</button>
+    </div>
+
+    <div class="test-section">
+        <h3>6. Quick Links</h3>
+        <a href="start.html" style="display: inline-block; margin: 5px; padding: 10px; background: #28a745; color: white; text-decoration: none; border-radius: 3px;">Start Station</a>
+        <a href="stop.html" style="display: inline-block; margin: 5px; padding: 10px; background: #dc3545; color: white; text-decoration: none; border-radius: 3px;">Stop Station</a>
+        <a href="leaderboard.html" style="display: inline-block; margin: 5px; padding: 10px; background: #17a2b8; color: white; text-decoration: none; border-radius: 3px;">Leaderboard</a>
+    </div>
+
+    <script type="module">
+        import { FingerprintAuth } from './js/modules/fingerprint-auth.js';
+        
+        let fingerprintAuth;
+        
+        async function checkSupport() {
+            const result = document.getElementById('supportResult');
+            try {
+                fingerprintAuth = new FingerprintAuth();
+                if (fingerprintAuth.isSupported) {
+                    result.innerHTML = '<span class="success">✅ Touch ID/WebAuthn is supported</span>';
+                } else {
+                    result.innerHTML = '<span class="error">❌ Touch ID/WebAuthn not supported</span>';
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testFirebase() {
+            const result = document.getElementById('firebaseResult');
+            try {
+                if (!fingerprintAuth) {
+                    fingerprintAuth = new FingerprintAuth();
+                }
+                await fingerprintAuth.initialize();
+                result.innerHTML = '<span class="success">✅ Firebase connection successful</span>';
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Firebase error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testRegister() {
+            const result = document.getElementById('registerResult');
+            try {
+                if (!fingerprintAuth) {
+                    await testFirebase();
+                }
+                const user = await fingerprintAuth.registerUser('Test User');
+                result.innerHTML = `<span class="success">✅ User registered: ${user.name} (ID: ${user.id})</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Registration failed: ${error.message}</span>`;
+            }
+        }
+        
+        async function testAuth() {
+            const result = document.getElementById('authResult');
+            try {
+                if (!fingerprintAuth) {
+                    await testFirebase();
+                }
+                const user = await fingerprintAuth.authenticateUser();
+                if (user) {
+                    result.innerHTML = `<span class="success">✅ User authenticated: ${user.name} (ID: ${user.id})</span>`;
+                } else {
+                    result.innerHTML = '<span class="error">❌ Authentication failed - no user returned</span>';
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Auth failed: ${error.message}</span>`;
+            }
+        }
+        
+        async function testSessions() {
+            const result = document.getElementById('sessionResult');
+            try {
+                if (!fingerprintAuth) {
+                    await testFirebase();
+                }
+                
+                // Test starting a session
+                const user = await fingerprintAuth.authenticateUser();
+                if (user) {
+                    await fingerprintAuth.startActiveSession(user.id, 'test');
+                    const activeSession = await fingerprintAuth.getActiveSession(user.id);
+                    
+                    if (activeSession) {
+                        result.innerHTML = `<span class="success">✅ Session started: ${user.name}</span>`;
+                        
+                        // Test stopping the session
+                        await fingerprintAuth.stopActiveSession(user.id);
+                        const stoppedSession = await fingerprintAuth.getActiveSession(user.id);
+                        
+                        if (!stoppedSession) {
+                            result.innerHTML += '<br><span class="success">✅ Session stopped successfully</span>';
+                        } else {
+                            result.innerHTML += '<br><span class="error">❌ Session stop failed</span>';
+                        }
+                    } else {
+                        result.innerHTML = '<span class="error">❌ Session start failed</span>';
+                    }
+                } else {
+                    result.innerHTML = '<span class="error">❌ Need to authenticate first</span>';
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Session test failed: ${error.message}</span>`;
+            }
+        }
+        
+        // Auto-run support check
+        checkSupport();
+    </script>
+</body>
+</html>

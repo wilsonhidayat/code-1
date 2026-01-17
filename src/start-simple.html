@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TQ Stair Streak - START Station (Simple)</title>
+  <link rel="stylesheet" href="css/station.css">
+  <style>
+    .big-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      font-size: 2rem;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      width: 100%;
+      margin: 20px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+    .big-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+    .big-button:active {
+      transform: translateY(0);
+    }
+    .status-box {
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin: 20px 0;
+      font-size: 1.2rem;
+    }
+    .timer-display {
+      font-size: 3rem;
+      font-weight: bold;
+      text-align: center;
+      padding: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 20px;
+      margin: 20px 0;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="station-header">
+      <h1>🏁 START STATION (Simple)</h1>
+      <p>Click the button and use Touch ID to start your session</p>
+    </div>
+    
+    <button class="big-button" id="startButton">
+      🚀 Touch ID to START Session
+    </button>
+    
+    <div class="status-box" id="status">
+      Ready to start your session
+    </div>
+    
+    <div class="timer-display" id="timerDisplay">
+      <div>⏱️ Session Time</div>
+      <div id="timer">00:00:00</div>
+    </div>
+    
+    <div class="nav-links">
+      <a href="leaderboard.html">View Leaderboard</a>
+      <a href="stop-simple.html">Go to Stop Station</a>
+      <a href="index.html">Main Menu</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { FingerprintAuth } from './js/modules/fingerprint-auth.js';
+
+    console.log('🚀 Starting SIMPLE start station...');
+    
+    const startButton = document.getElementById('startButton');
+    const statusEl = document.getElementById('status');
+    const timerDisplayEl = document.getElementById('timerDisplay');
+    const timerEl = document.getElementById('timer');
+    
+    let fingerprintAuth;
+    let isProcessing = false;
+    let sessionStartTime = null;
+    let timerInterval = null;
+
+    // Initialize
+    async function init() {
+      try {
+        statusEl.textContent = '🔧 Initializing Touch ID system...';
+        statusEl.style.background = '#fff3cd';
+        
+        fingerprintAuth = new FingerprintAuth();
+        
+        if (!fingerprintAuth.isSupported) {
+          statusEl.textContent = '❌ Touch ID not supported on this device';
+          statusEl.style.background = '#f8d7da';
+          startButton.disabled = true;
+          return;
+        }
+        
+        await fingerprintAuth.initialize();
+        
+        statusEl.textContent = '✅ Ready! Click the button and use Touch ID to start your session.';
+        statusEl.style.background = '#d4edda';
+        startButton.disabled = false;
+        
+      } catch (error) {
+        console.error('❌ Initialization failed:', error);
+        statusEl.textContent = '❌ Initialization failed: ' + error.message;
+        statusEl.style.background = '#f8d7da';
+        startButton.disabled = true;
+      }
+    }
+
+    // Start button click handler
+    startButton.addEventListener('click', async () => {
+      if (isProcessing) {
+        console.log('Already processing, skipping...');
+        return;
+      }
+      
+      isProcessing = true;
+      startButton.disabled = true;
+      
+      try {
+        statusEl.textContent = '👆 Touch your fingerprint sensor now...';
+        statusEl.style.background = '#cfe2ff';
+        
+        // Authenticate user
+        console.log('🔐 Attempting Touch ID authentication...');
+        const user = await fingerprintAuth.authenticateUser();
+        
+        if (!user) {
+          throw new Error('Authentication failed - no user returned');
+        }
+        
+        console.log('✅ User authenticated:', user.name);
+        statusEl.textContent = `✅ Authenticated as ${user.name}. Starting session...`;
+        
+        // Start session
+        await fingerprintAuth.startActiveSession(user.id, 'start');
+        console.log('✅ Session started in database');
+        
+        // Save tap event
+        await fingerprintAuth.saveTapEvent(user, 'start', 0);
+        console.log('✅ Tap event saved');
+        
+        // Show success
+        statusEl.textContent = `🎉 Session started for ${user.name}! Timer is running...`;
+        statusEl.style.background = '#d4edda';
+        
+        // Start timer
+        sessionStartTime = new Date();
+        timerDisplayEl.style.display = 'block';
+        
+        timerInterval = setInterval(() => {
+          if (sessionStartTime) {
+            const now = new Date();
+            const elapsed = Math.floor((now - sessionStartTime) / 1000);
+            timerEl.textContent = formatTime(elapsed);
+          }
+        }, 1000);
+        
+        // Change button text
+        startButton.textContent = '✅ Session Active - Go to Stop Station';
+        
+        // Re-enable button after 3 seconds
+        setTimeout(() => {
+          startButton.disabled = false;
+          isProcessing = false;
+        }, 3000);
+        
+      } catch (error) {
+        console.error('❌ Error:', error);
+        
+        if (error.message.includes('cancelled') || error.message.includes('abort')) {
+          statusEl.textContent = '⚠️ Touch ID cancelled. Click the button to try again.';
+          statusEl.style.background = '#fff3cd';
+        } else {
+          statusEl.textContent = '❌ Error: ' + error.message;
+          statusEl.style.background = '#f8d7da';
+        }
+        
+        startButton.disabled = false;
+        isProcessing = false;
+      }
+    });
+
+    // Format time helper
+    function formatTime(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      if (hours > 0) {
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      } else {
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+    }
+
+    // Initialize on page load
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TQ Stair Streak - Main Menu</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+  <div class="main-container">
+    <h1>🏃‍♂️ TQ Stair Streak</h1>
+    <p class="subtitle">Touch ID powered stair climbing tracker</p>
+    
+    <div class="station-card start-card">
+      <div class="station-title">🏁 START Station</div>
+      <div class="station-desc">Fully automated! Just use Touch ID - it will auto-register new users or start speed timing for existing users.</div>
+      <a href="start.html" class="station-link">→ Go to Start Station</a>
+    </div>
+    
+    <div class="station-card stop-card">
+      <div class="station-title">🏁 STOP Station</div>
+      <div class="station-desc">Fully automated! Just use Touch ID - it will automatically stop your speed timing session.</div>
+      <a href="stop.html" class="station-link">→ Go to Stop Station</a>
+    </div>
+    
+    <div class="station-card leaderboard-card">
+      <div class="station-title">🏆 Leaderboard</div>
+      <div class="station-desc">Real-time speed rankings showing personal best times and session counts.</div>
+      <a href="leaderboard.html" class="station-link">→ View Leaderboard</a>
+    </div>
+    
+    <div class="info-section">
+      <h3>📋 How it works:</h3>
+      <ul>
+        <li><strong>Auto-Register:</strong> New users are automatically registered when they first use Touch ID</li>
+        <li><strong>Auto-Start:</strong> Go to START station and use Touch ID - speed timing begins automatically</li>
+        <li><strong>Auto-Stop:</strong> Go to STOP station and use Touch ID - session ends automatically</li>
+        <li><strong>Speed Tracking:</strong> Each complete start→stop sequence tracks your personal best time</li>
+        <li><strong>Real-time Leaderboard:</strong> See live rankings of fastest times and session counts</li>
+      </ul>
+    </div>
+    
+    <div class="info-section">
+      <h3>💡 Setup Instructions:</h3>
+      <ol>
+        <li>Deploy this website on two separate devices (tablets/phones/computers)</li>
+        <li>Place one device at the <strong>bottom</strong> of the stairs (START station)</li>
+        <li>Place another device at the <strong>top</strong> of the stairs (STOP station)</li>
+        <li>Display the leaderboard on a large screen for everyone to see</li>
+        <li>Users register once with Touch ID on either device, then can use both stations</li>
+      </ol>
+    </div>
+    
+    <div class="info-section">
+      <h3>🔐 Authentication Options:</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; border: 2px solid #e9ecef;">
+          <h4>👆 Touch ID (Primary)</h4>
+          <p>Uses fingerprint authentication for reliable identification</p>
+          <p><strong>Best for:</strong> MacBooks with Touch ID</p>
+          <a href="start.html" class="station-link">→ Touch ID Start</a>
+          <a href="stop.html" class="station-link">→ Touch ID Stop</a>
+        </div>
+        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; border: 2px solid #e9ecef;">
+          <h4>📱 Face Recognition (Legacy)</h4>
+          <p>Uses computer vision for automatic face detection</p>
+          <p><strong>Best for:</strong> Mobile devices, tablets</p>
+          <a href="start-touchid.html" class="station-link">→ Face Recognition Start</a>
+          <a href="stop-touchid.html" class="station-link">→ Face Recognition Stop</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="info-section">
+      <h3>🧪 Testing:</h3>
+      <p>Use these test pages to verify functionality:</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="test-simple.html" class="station-link">→ Basic Test</a>
+        <a href="test-complete.html" class="station-link">→ Complete Test</a>
+        <a href="test-leaderboard.html" class="station-link">→ Leaderboard Test</a>
+        <a href="test-touchid.html" class="station-link">→ Touch ID Test</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

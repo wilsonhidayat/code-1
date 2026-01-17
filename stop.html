@@ -1,0 +1,530 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TQ Stair Streak - STOP Station</title>
+  <link rel="stylesheet" href="src/css/station.css">
+</head>
+<body>
+  <div class="container">
+    <div class="station-header">
+      <h1>🏁 STOP STATION</h1>
+      <p>End your stair climbing streak with Touch ID</p>
+    </div>
+    
+    
+    <div class="auto-detection">
+      <h3>👆 Touch ID Authentication</h3>
+      <p>Use your fingerprint to authenticate - no camera needed! Will stop your active session</p>
+      <div class="auto-indicator">
+        <span class="pulse-dot"></span>
+        <span>100% Touch ID Operation</span>
+      </div>
+      <div id="sessionStatus" class="session-status" style="margin-top: 10px; padding: 10px; border-radius: 5px; background: rgba(255,255,255,0.1);">
+        🔍 Checking for active sessions...
+      </div>
+    </div>
+    
+    <div class="current-user" id="currentUser" style="display: none;">
+      <h3>Current User</h3>
+      <div class="user-info">
+        <div class="user-details">
+          <span id="userName" class="user-name"></span>
+          <span id="userStatus" class="user-status"></span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timer-display" id="timerDisplay" style="display: none;">
+      <h3>🏃‍♂️ Speed Timer</h3>
+      <div class="timer" id="timer">00:00:00</div>
+    </div>
+    
+    <div class="session-info" id="sessionInfo" style="display: none;">
+      <h3>🏃‍♂️ Speed Summary</h3>
+      <div class="session-details">
+        <div class="session-time">
+          <span class="label">Your Time:</span>
+          <span id="sessionDuration" class="value">00:00:00</span>
+        </div>
+        <div class="session-stats">
+          <span class="label">Started:</span>
+          <span id="sessionStart" class="value">--:--:--</span>
+        </div>
+      </div>
+    </div>
+    
+    <div id="status">👆 Touch ID system ready - tap the button to authenticate</div>
+    
+    <div class="nav-links">
+      <a href="src/leaderboard.html">View Leaderboard</a>
+      <a href="src/start.html">Go to Start Station</a>
+      <a href="src/index.html">Main Menu</a>
+    </div>
+    
+  </div>
+
+  <script type="module">
+    import { FingerprintAuth } from './src/js/modules/fingerprint-auth.js';
+    
+    console.log('🚀 Starting stop station...');
+    
+    let fingerprintAuth;
+    let isAuthenticating = false;
+    let lastDetectionTime = 0;
+    let detectionCooldown = 1000; // 1 second between detections
+
+    // Initialize Touch ID system
+    async function initializeTouchID() {
+      try {
+        console.log('🔧 Initializing Touch ID system...');
+        
+        fingerprintAuth = new FingerprintAuth();
+        
+        if (!fingerprintAuth.isSupported) {
+          throw new Error('Touch ID not supported on this device');
+        }
+        
+        await fingerprintAuth.initialize();
+        console.log('✅ Touch ID system initialized successfully');
+        
+        setupTouchIDInterface();
+        startAutoTouchIDDetection();
+        checkActiveSessionsStatus();
+        
+        updateStatus('✅ Touch ID ready! Touch your fingerprint sensor to stop a session.', 'success');
+        
+      } catch (error) {
+        console.error('❌ Touch ID initialization failed:', error);
+        updateStatus('❌ Touch ID initialization failed: ' + error.message, 'error');
+      }
+    }
+    
+    // Setup Touch ID interface
+    function setupTouchIDInterface() {
+      const autoDetection = document.querySelector('.auto-detection');
+      
+      // Create Touch ID container
+      const touchIdContainer = document.createElement('div');
+      touchIdContainer.id = 'touchIdContainer';
+      touchIdContainer.style.cssText = `
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        margin: 20px 0;
+      `;
+
+      // Touch ID icon
+      const touchIdIcon = document.createElement('div');
+      touchIdIcon.innerHTML = '🛑';
+      touchIdIcon.style.cssText = `
+        font-size: 4rem;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+      `;
+
+      // Title
+      const title = document.createElement('h2');
+      title.textContent = 'Touch ID to Stop';
+      title.style.cssText = `
+        margin: 0 0 10px 0;
+        font-size: 1.8rem;
+        font-weight: bold;
+      `;
+
+      // Description
+      const description = document.createElement('p');
+      description.textContent = 'Touch your fingerprint sensor to stop your stair climbing session';
+      description.style.cssText = `
+        margin: 0 0 20px 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+      `;
+
+      // Progress container
+      const progressContainer = document.createElement('div');
+      progressContainer.id = 'progressContainer';
+      progressContainer.style.cssText = `
+        display: none;
+        margin: 20px 0;
+      `;
+
+      const progressBar = document.createElement('div');
+      progressBar.id = 'progressBar';
+      progressBar.style.cssText = `
+        width: 0%;
+        height: 6px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 3px;
+        overflow: hidden;
+        transition: width 0.3s ease;
+        position: relative;
+      `;
+
+      const shimmer = document.createElement('div');
+      shimmer.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        animation: shimmer 2s infinite;
+      `;
+
+      progressBar.appendChild(shimmer);
+      progressContainer.appendChild(progressBar);
+
+      // Auto-detection indicator
+      const autoIndicator = document.createElement('div');
+      autoIndicator.innerHTML = '🤖 AUTO-DETECTION ACTIVE - TOUCH FINGERPRINT SENSOR';
+      autoIndicator.style.cssText = `
+        background: rgba(255,255,255,0.2);
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin: 20px 0;
+        font-size: 14px;
+        font-weight: bold;
+        backdrop-filter: blur(10px);
+        animation: glow 2s infinite;
+      `;
+
+      // Status text
+      const statusText = document.createElement('div');
+      statusText.id = 'touchIdStatus';
+      statusText.textContent = 'Touch your fingerprint sensor to stop';
+      statusText.style.cssText = `
+        margin-top: 15px;
+        font-size: 16px;
+        opacity: 0.9;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+      `;
+
+      // Assemble the container
+      touchIdContainer.appendChild(touchIdIcon);
+      touchIdContainer.appendChild(title);
+      touchIdContainer.appendChild(description);
+      touchIdContainer.appendChild(autoIndicator);
+      touchIdContainer.appendChild(progressContainer);
+      touchIdContainer.appendChild(statusText);
+
+      // Add CSS animations
+      addAnimations();
+
+      // Add to auto-detection section
+      autoDetection.appendChild(touchIdContainer);
+
+      // Add click listener
+      touchIdContainer.addEventListener('click', async () => {
+        if (!isAuthenticating) {
+          console.log('👆 Touch ID container clicked - triggering authentication');
+          await authenticateWithTouchId();
+        }
+      });
+    }
+
+    // Add CSS animations
+    function addAnimations() {
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        @keyframes shimmer {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+        @keyframes glow {
+          0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+          50% { box-shadow: 0 0 20px rgba(255,255,255,0.6); }
+          100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        }
+        #touchIdContainer:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Start automatic Touch ID detection
+    function startAutoTouchIDDetection() {
+      console.log('🤖 Starting automatic Touch ID detection for STOP station...');
+      
+      const detectTouchID = async () => {
+        const now = Date.now();
+        
+        if (isAuthenticating || (now - lastDetectionTime < detectionCooldown)) {
+          return;
+        }
+        
+        try {
+          if (!fingerprintAuth || !fingerprintAuth.isSupported) {
+            return;
+          }
+          
+          console.log('🔍 Attempting Touch ID authentication for STOP station...');
+          
+          try {
+            console.log('🔐 Attempting Touch ID authentication...');
+            const user = await fingerprintAuth.authenticateUser();
+            if (user) {
+              console.log('✅ Touch ID detected! User:', user.name);
+              isAuthenticating = true;
+              lastDetectionTime = Date.now();
+              await handleUserAuthentication(user);
+              isAuthenticating = false;
+              return;
+            } else {
+              console.log('⚠️ No user returned from authentication');
+            }
+          } catch (authError) {
+            if (authError.message.includes('cancelled') || authError.message.includes('abort')) {
+              console.log('👆 User cancelled Touch ID (normal behavior)');
+            } else {
+              console.log('❌ Touch ID error:', authError.message);
+            }
+          }
+          
+        } catch (error) {
+          console.log('Auto-detection check:', error.message);
+        }
+      };
+      
+      setInterval(detectTouchID, 1000);
+    }
+
+    // Touch ID authentication function
+    async function authenticateWithTouchId() {
+      if (!fingerprintAuth) {
+        updateStatus('❌ Touch ID system not initialized', 'error');
+        return;
+      }
+
+      if (isAuthenticating) {
+        console.log('Already authenticating, skipping...');
+        return;
+      }
+
+      isAuthenticating = true;
+      showProgressBar();
+
+      try {
+        // Step 1: Check support
+        updateProgress(10, '🔍 Checking Touch ID support...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Step 2: Authenticate user
+        updateProgress(30, '👆 Touch your fingerprint sensor...');
+        const user = await fingerprintAuth.authenticateUser();
+        
+        if (!user) {
+          throw new Error('Authentication failed - no user returned');
+        }
+
+        // Step 3: Process authentication
+        updateProgress(60, '📝 Processing user...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Step 4: Process authentication
+        updateProgress(90, '⚡ Processing authentication...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        await handleUserAuthentication(user);
+        updateProgress(100, '🎉 Authentication complete!');
+        
+      } catch (error) {
+        console.error('❌ Touch ID authentication failed:', error);
+        updateProgress(0, '❌ Authentication failed: ' + error.message);
+        updateStatus('❌ Authentication failed: ' + error.message, 'error');
+      } finally {
+        setTimeout(() => {
+          hideProgressBar();
+          const touchIdStatus = document.getElementById('touchIdStatus');
+          if (touchIdStatus) {
+            touchIdStatus.textContent = 'Touch your fingerprint sensor to stop';
+          }
+          isAuthenticating = false;
+        }, 1000);
+      }
+    }
+
+    // Handle user authentication
+    async function handleUserAuthentication(user) {
+      console.log(`🔍 Processing user: ${user.name} (ID: ${user.id})`);
+      
+      try {
+        // Check if user has an active session to stop
+        console.log(`🔍 Checking active session for user: ${user.name} (ID: ${user.id})`);
+        
+        const activeSession = await fingerprintAuth.getActiveSession(user.id);
+        console.log(`📊 Active session result:`, activeSession);
+        
+        if (!activeSession) {
+          // Check if there are any active sessions at all
+          const { db, collection, getDocs } = await import('./src/js/config/firebase.js');
+          const activeSessionsSnapshot = await getDocs(collection(db, 'activeSessions'));
+          const totalSessions = activeSessionsSnapshot.size;
+          
+          console.log(`📊 Total active sessions in database: ${totalSessions}`);
+          
+          if (totalSessions === 0) {
+            updateStatus(`👤 ${user.name} - No active sessions found. Please start a session at the start station first.`, 'warning');
+          } else {
+            updateStatus(`👤 ${user.name} - You don't have an active session. ${totalSessions} other session(s) are active.`, 'warning');
+          }
+          console.log(`⚠️ No active session found for user: ${user.name} (${user.id})`);
+          return;
+        }
+        
+        console.log(`✅ Found active session for ${user.name}:`, activeSession);
+        
+        // Stop speed timing directly
+        const now = new Date();
+        const duration = now - new Date(activeSession.startTime);
+        const durationSeconds = Math.round(duration / 1000);
+        
+        // Remove active session
+        await fingerprintAuth.stopActiveSession(user.id);
+        
+        // Save tap event
+        await fingerprintAuth.saveTapEvent(user, 'stop', durationSeconds);
+        
+        updateStatus(`🏁 ${user.name} - Session completed with Touch ID!`, 'success');
+        
+        // Show current user
+        showCurrentUser(user);
+        
+        // Show session summary
+        showSessionSummary({
+          duration: durationSeconds,
+          startTime: activeSession.startTime
+        });
+        
+      } catch (error) {
+        console.error('Error processing user:', error);
+        updateStatus(`❌ Failed to stop session for ${user.name}: ${error.message}`, 'error');
+      }
+    }
+
+    // Show current user info
+    function showCurrentUser(user) {
+      const currentUserEl = document.getElementById('currentUser');
+      const userNameEl = document.getElementById('userName');
+      const userStatusEl = document.getElementById('userStatus');
+      
+      if (currentUserEl) currentUserEl.style.display = 'block';
+      if (userNameEl) userNameEl.textContent = user.name;
+      if (userStatusEl) userStatusEl.textContent = 'Session Stopped (Touch ID)';
+    }
+
+    // Show session summary
+    function showSessionSummary(sessionData) {
+      const sessionInfoEl = document.getElementById('sessionInfo');
+      const sessionDurationEl = document.getElementById('sessionDuration');
+      const sessionStartEl = document.getElementById('sessionStart');
+      
+      if (sessionInfoEl) sessionInfoEl.style.display = 'block';
+      if (sessionDurationEl) sessionDurationEl.textContent = formatTime(sessionData.duration);
+      if (sessionStartEl) sessionStartEl.textContent = formatDate(sessionData.startTime);
+    }
+
+    // Format time helper
+    function formatTime(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      if (hours > 0) {
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      } else {
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+    }
+
+    // Format date helper
+    function formatDate(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString();
+    }
+
+    // Progress bar functions
+    function showProgressBar() {
+      const progressContainer = document.getElementById('progressContainer');
+      const touchIdStatus = document.getElementById('touchIdStatus');
+      if (progressContainer) progressContainer.style.display = 'block';
+      if (touchIdStatus) touchIdStatus.style.fontWeight = 'bold';
+    }
+
+    function hideProgressBar() {
+      const progressContainer = document.getElementById('progressContainer');
+      const progressBar = document.getElementById('progressBar');
+      const touchIdStatus = document.getElementById('touchIdStatus');
+      if (progressContainer) progressContainer.style.display = 'none';
+      if (progressBar) progressBar.style.width = '0%';
+      if (touchIdStatus) touchIdStatus.style.fontWeight = 'normal';
+    }
+
+    function updateProgress(percentage, message) {
+      const progressBar = document.getElementById('progressBar');
+      const touchIdStatus = document.getElementById('touchIdStatus');
+      
+      if (progressBar) progressBar.style.width = percentage + '%';
+      if (touchIdStatus) touchIdStatus.textContent = message;
+      
+      updateStatus(message, percentage === 100 ? 'success' : 'info');
+    }
+
+    // Check and display active sessions status
+    async function checkActiveSessionsStatus() {
+      try {
+        const { db, collection, getDocs } = await import('./src/js/config/firebase.js');
+        const activeSessionsSnapshot = await getDocs(collection(db, 'activeSessions'));
+        const totalSessions = activeSessionsSnapshot.size;
+        
+        const sessionStatusEl = document.getElementById('sessionStatus');
+        if (sessionStatusEl) {
+          if (totalSessions === 0) {
+            sessionStatusEl.innerHTML = '⏸️ No active sessions - Go to start station first';
+            sessionStatusEl.style.background = 'rgba(255,165,0,0.3)';
+          } else {
+            sessionStatusEl.innerHTML = `✅ ${totalSessions} active session(s) - Ready to stop!`;
+            sessionStatusEl.style.background = 'rgba(0,255,0,0.3)';
+          }
+        }
+        
+        console.log(`📊 Active sessions status: ${totalSessions} sessions`);
+      } catch (error) {
+        console.error('Error checking active sessions:', error);
+        const sessionStatusEl = document.getElementById('sessionStatus');
+        if (sessionStatusEl) {
+          sessionStatusEl.innerHTML = '❌ Error checking sessions';
+          sessionStatusEl.style.background = 'rgba(255,0,0,0.3)';
+        }
+      }
+    }
+
+    // Update status message
+    function updateStatus(message, type = 'info') {
+      const statusEl = document.getElementById('status');
+      if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.style.color = type === 'success' ? '#4CAF50' : 
+                              type === 'error' ? '#f44336' : 
+                              type === 'warning' ? '#ff9800' : '#2196F3';
+      }
+    }
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initializeTouchID);
+  </script>
+</body>
+</html>

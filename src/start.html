@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TQ Stair Streak - START Station</title>
+  <link rel="stylesheet" href="css/station.css">
+</head>
+<body>
+  <div class="container">
+    <div class="station-header">
+      <h1>🏁 START STATION</h1>
+      <p>Begin your stair climbing streak with Touch ID</p>
+    </div>
+    
+    <div class="auto-detection">
+      <h3>👆 Touch ID Authentication</h3>
+      <p>Use your fingerprint to authenticate - no camera needed! Will auto-register new users or start sessions for existing users</p>
+      <div class="auto-indicator">
+        <span class="pulse-dot"></span>
+        <span>100% Touch ID Operation</span>
+      </div>
+    </div>
+    
+    <div class="current-user" id="currentUser" style="display: none;">
+      <h3>Current User</h3>
+      <div class="user-info">
+        <div class="user-details">
+          <span id="userName" class="user-name"></span>
+          <span id="userStatus" class="user-status"></span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timer-display" id="timerDisplay" style="display: none;">
+      <h3>🏃‍♂️ Speed Timer</h3>
+      <div class="timer" id="timer">00:00:00</div>
+    </div>
+    
+    <div id="status">👆 Touch ID system ready - touch your fingerprint sensor to start</div>
+    
+    <div class="nav-links">
+      <a href="leaderboard.html">View Leaderboard</a>
+      <a href="stop.html">Go to Stop Station</a>
+      <a href="index.html">Main Menu</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { StartStation } from './js/modules/start-station.js';
+
+    console.log('🚀 Starting start station...');
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        startStation = new StartStation();
+        await startStation.initialize();
+      } catch (error) {
+        console.error('Failed to initialize start station:', error);
+      }
+    });
+  </script>
+</body>
+</html>
